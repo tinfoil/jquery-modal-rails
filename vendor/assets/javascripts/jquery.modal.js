@@ -1,6 +1,6 @@
 /*
     A simple jQuery modal (http://github.com/kylefox/jquery-modal)
-    Version 0.5.4
+    Version 0.5.11
 */
 (function($) {
 
@@ -41,6 +41,7 @@
       }
     } else {
       this.$elm = el;
+      this.$body.append(this.$elm);
       this.open();
     }
   };
@@ -94,7 +95,7 @@
     unblock: function() {
       if(this.options.doFade) {
         this.blocker.fadeOut(this.options.fadeDuration, function() {
-          this.remove();
+          $(this).remove();
         });
       } else {
         this.blocker.remove();
@@ -104,7 +105,7 @@
     show: function() {
       this.$elm.trigger($.modal.BEFORE_OPEN, [this._ctx()]);
       if (this.options.showClose) {
-        this.closeButton = $('<a href="#close-modal" rel="modal:close" class="close-modal">' + this.options.closeText + '</a>');
+        this.closeButton = $('<a href="#close-modal" rel="modal:close" class="close-modal ' + this.options.closeClass + '">' + this.options.closeText + '</a>');
         this.$elm.append(this.closeButton);
       }
       this.$elm.addClass(this.options.modalClass + ' current');
@@ -122,10 +123,15 @@
       if (this.closeButton) this.closeButton.remove();
       this.$elm.removeClass('current');
 
+      var _this = this;
       if(this.options.doFade) {
-        this.$elm.fadeOut(this.options.fadeDuration);
+        this.$elm.fadeOut(this.options.fadeDuration, function () {
+          _this.$elm.trigger($.modal.AFTER_CLOSE, [_this._ctx()]);
+        });
       } else {
-        this.$elm.hide();
+        this.$elm.hide(0, function () {
+          _this.$elm.trigger($.modal.AFTER_CLOSE, [_this._ctx()]);
+        });
       }
       this.$elm.trigger($.modal.CLOSE, [this._ctx()]);
     },
@@ -176,6 +182,11 @@
     current.resize();
   };
 
+  // Returns if there currently is an active modal
+  $.modal.isActive = function () {
+    return current ? true : false;
+  }
+
   $.modal.defaults = {
     overlay: "#000",
     opacity: 0.75,
@@ -183,6 +194,7 @@
     escapeClose: true,
     clickClose: true,
     closeText: 'Close',
+    closeClass: '',
     modalClass: "modal",
     spinnerHtml: null,
     showSpinner: true,
@@ -198,6 +210,7 @@
   $.modal.OPEN = 'modal:open';
   $.modal.BEFORE_CLOSE = 'modal:before-close';
   $.modal.CLOSE = 'modal:close';
+  $.modal.AFTER_CLOSE = 'modal:after-close';
   $.modal.AJAX_SEND = 'modal:ajax:send';
   $.modal.AJAX_SUCCESS = 'modal:ajax:success';
   $.modal.AJAX_FAIL = 'modal:ajax:fail';
